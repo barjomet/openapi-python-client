@@ -152,7 +152,9 @@ class Project:
         package_init = self.package_dir / "__init__.py"
 
         package_init_template = self.env.get_template("package_init.py.jinja")
-        package_init.write_text(package_init_template.render(), encoding=self.file_encoding)
+        package_init.write_text(
+            package_init_template.render(description=self.package_description), encoding=self.file_encoding
+        )
 
         if self.meta != MetaType.NONE:
             pytyped = self.package_dir / "py.typed"
@@ -174,7 +176,9 @@ class Project:
         readme = self.project_dir / "README.md"
         readme_template = self.env.get_template("README.md.jinja")
         readme.write_text(
-            readme_template.render(),
+            readme_template.render(
+                project_name=self.project_name, description=self.package_description, package_name=self.package_name
+            ),
             encoding=self.file_encoding,
         )
 
@@ -188,7 +192,12 @@ class Project:
         pyproject_template = self.env.get_template(template)
         pyproject_path = self.project_dir / "pyproject.toml"
         pyproject_path.write_text(
-            pyproject_template.render(),
+            pyproject_template.render(
+                project_name=self.project_name,
+                package_name=self.package_name,
+                version=self.version,
+                description=self.package_description,
+            ),
             encoding=self.file_encoding,
         )
 
@@ -196,7 +205,12 @@ class Project:
         template = self.env.get_template("setup.py.jinja")
         path = self.project_dir / "setup.py"
         path.write_text(
-            template.render(),
+            template.render(
+                project_name=self.project_name,
+                package_name=self.package_name,
+                version=self.version,
+                description=self.package_description,
+            ),
             encoding=self.file_encoding,
         )
 
@@ -241,6 +255,7 @@ class Project:
         api_init_template = self.env.get_template("api_init.py.jinja")
         api_init_path.write_text(
             api_init_template.render(
+                package_name=self.package_name,
                 endpoint_collections_by_tag=endpoint_collections_by_tag,
             ),
             encoding=self.file_encoding,
@@ -254,9 +269,10 @@ class Project:
             endpoint_init_path = tag_dir / "__init__.py"
             endpoint_init_template = self.env.get_template("endpoint_init.py.jinja")
             endpoint_init_path.write_text(
-                endpoint_init_template.render(endpoint_collection=collection),
+                endpoint_init_template.render(package_name=self.package_name, tag=tag, endpoints=collection.endpoints),
                 encoding=self.file_encoding,
             )
+            (tag_dir / "__init__.py").touch()
 
             for endpoint in collection.endpoints:
                 module_path = tag_dir / f"{snake_case(endpoint.name)}.py"
