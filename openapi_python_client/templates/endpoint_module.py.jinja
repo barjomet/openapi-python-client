@@ -2,17 +2,17 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 import httpx
 
-from ...client import AuthenticatedClient, Client
+from ...client import Client
 from ...types import Response, UNSET
 
 {% for relative in endpoint.relative_imports %}
 {{ relative }}
 {% endfor %}
 
-{% from "endpoint_macros.py.jinja" import header_params, cookie_params, query_params, json_body, multipart_body, arguments, client, kwargs, parse_response %}
+{% from "endpoint_macros.py.jinja" import header_params, cookie_params, query_params, json_body, arguments, client, kwargs, parse_response %}
 
 {% set return_string = endpoint.response_type() %}
-{% set parsed_responses = (endpoint.responses | length > 0) and return_string != "Any" %}
+{% set parsed_responses = (endpoint.responses | length > 0) and return_string != "None" %}
 
 def _get_kwargs(
     {{ arguments(endpoint) | indent(4) }}
@@ -33,7 +33,9 @@ def _get_kwargs(
 
     {{ query_params(endpoint) | indent(4) }}
 
+    {% if endpoint.json_body %}
     {{ json_body(endpoint) | indent(4) }}
+    {% endif %}
 
     {{ multipart_body(endpoint) | indent(4) }}
 
@@ -42,12 +44,14 @@ def _get_kwargs(
         "headers": headers,
         "cookies": cookies,
         "timeout": client.get_timeout(),
-        {% if endpoint.form_body_class %}
-        "data": form_data.to_dict(),
-        {% elif endpoint.multipart_body %}
-        "files": {{ "multipart_" + endpoint.multipart_body.python_name }},
-        {% elif endpoint.json_body %}
+        "verify": client.verify,
+        {% if endpoint.json_body %}
         "json": {{ "json_" + endpoint.json_body.python_name }},
+        {% elif endpoint.form_body_class %}
+        "data": form_data.to_dict(),
+        {% elif endpoint.multipart_body_class %}
+        "files": files,
+        "data": data,
         {% endif %}
         {% if endpoint.query_parameters %}
         "params": params,

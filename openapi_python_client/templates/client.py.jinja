@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import attr
 
@@ -10,10 +10,15 @@ class Client:
     cookies: Dict[str, str] = attr.ib(factory=dict, kw_only=True)
     headers: Dict[str, str] = attr.ib(factory=dict, kw_only=True)
     timeout: float = attr.ib(5.0, kw_only=True)
+    token: str = None
+    verify: Optional[bool] = False
 
     def get_headers(self) -> Dict[str, str]:
         """ Get headers to be used in all endpoints """
-        return {**self.headers}
+        if self.token is not None:
+            return {"access_token": self.token, **self.headers}
+        else:
+            return {**self.headers}
 
     def with_headers(self, headers: Dict[str, str]) -> "Client":
         """ Get a new client matching this one with additional headers """
@@ -32,13 +37,3 @@ class Client:
     def with_timeout(self, timeout: float) -> "Client":
         """ Get a new client matching this one with a new timeout (in seconds) """
         return attr.evolve(self, timeout=timeout)
-
-@attr.s(auto_attribs=True)
-class AuthenticatedClient(Client):
-    """ A Client which has been authenticated for use on secured endpoints """
-
-    token: str
-
-    def get_headers(self) -> Dict[str, str]:
-        """ Get headers to be used in authenticated endpoints """
-        return {"Authorization": f"Bearer {self.token}", **self.headers}

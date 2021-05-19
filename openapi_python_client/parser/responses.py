@@ -48,7 +48,7 @@ def response_from_data(
 ) -> Tuple[Union[Response, ParseError], Schemas]:
     """Generate a Response from the OpenAPI dictionary representation of it"""
 
-    response_name = f"response_{status_code}"
+    response_name = f"parsed_response"
     if isinstance(data, oai.Reference) or data.content is None:
         return (
             empty_response(status_code=status_code, response_name=response_name, config=config),

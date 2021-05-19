@@ -97,7 +97,10 @@ return field_dict
 
     @classmethod
     def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
-        d = src_dict.copy()
+        try:
+            d = src_dict.copy()
+        except AttributeError:
+            d = {}
 {% for property in model.required_properties + model.optional_properties %}
     {% if property.required %}
         {% set property_source = 'd.pop("' + property.name + '")' %}

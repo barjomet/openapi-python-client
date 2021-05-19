@@ -16,6 +16,7 @@ class Config(BaseModel):
     package_name_override: Optional[str]
     package_version_override: Optional[str]
     field_prefix: str = "field_"
+    endpoint_as_module: Optional[bool] = False
 
     @staticmethod
     def load_from_path(path: Path) -> "Config":
