@@ -1,1 +1,19 @@
 """ Contains methods for accessing the API """
+
+from ..client import Client
+{% for tag, collection in endpoint_collections_by_tag %}
+from .{{ tag }} import {{ utils.pascal_case(tag) }}Endpoints
+{% endfor %}
+
+class {{ utils.pascal_case(package_name) }}(Client):
+{% for tag, collection in endpoint_collections_by_tag %}
+    __{{ tag }} = None
+{% endfor %}
+
+{% for tag, collection in endpoint_collections_by_tag %}
+    @property
+    def {{ tag }}(self) -> {{ utils.pascal_case(tag) }}Endpoints:
+        if self.__{{ tag }} is None:
+            self.__{{ tag }} = {{ utils.pascal_case(tag) }}Endpoints(client=self)
+        return self.__{{ tag }}
+{% endfor %}

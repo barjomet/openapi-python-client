@@ -17,7 +17,7 @@ from openapi_python_client import utils
 from .config import Config
 from .parser import GeneratorData, import_string_from_class
 from .parser.errors import GeneratorError
-from .utils import snake_case
+from .utils import pascal_case, snake_case
 
 if sys.version_info.minor < 8:  # version did not exist before 3.8, need to use a backport
     from importlib_metadata import version
@@ -80,6 +80,7 @@ class Project:
             f"A client library for accessing {self.openapi.title}"
         )
         self.version: str = config.package_version_override or openapi.version
+        self.endpoint_as_module = config.endpoint_as_module
 
         self.env.filters.update(TEMPLATE_FILTERS)
 
@@ -145,7 +146,9 @@ class Project:
 
         package_init_template = self.env.get_template("package_init.py.jinja")
         package_init.write_text(
-            package_init_template.render(description=self.package_description), encoding=self.file_encoding
+            package_init_template.render(description=self.package_description,
+                                         package_name=self.package_name),
+            encoding=self.file_encoding
         )
 
         if self.meta != MetaType.NONE:
@@ -241,7 +244,7 @@ class Project:
 
         # Generate endpoints
         endpoint_collections_by_tag = self.openapi.endpoint_collections_by_tag.items()
-        api_dir = self.package_dir / "api"
+        self.api_dir = api_dir = self.package_dir / "api"
         api_dir.mkdir()
         api_init_path = api_dir / "__init__.py"
         api_init_template = self.env.get_template("api_init.py.jinja")
@@ -252,10 +255,15 @@ class Project:
             ),
             encoding=self.file_encoding,
         )
+        if self.endpoint_as_module:
+            self._build_endpoints_modules(endpoint_collections_by_tag)
+        else:
+            self._build_endpoints_as_methods(endpoint_collections_by_tag)
 
+    def _build_endpoints_modules(self, endpoint_collections_by_tag):
         endpoint_template = self.env.get_template("endpoint_module.py.jinja")
         for tag, collection in endpoint_collections_by_tag:
-            tag_dir = api_dir / tag
+            tag_dir = self.api_dir / tag
             tag_dir.mkdir()
 
             endpoint_init_path = tag_dir / "__init__.py"
@@ -269,6 +277,16 @@ class Project:
             for endpoint in collection.endpoints:
                 module_path = tag_dir / f"{snake_case(endpoint.name)}.py"
                 module_path.write_text(endpoint_template.render(endpoint=endpoint), encoding=self.file_encoding)
+
+    def _build_endpoints_as_methods(self, endpoint_collections_by_tag):
+        tag_template = self.env.get_template("tag.py.jinja")
+        for tag, collection in endpoint_collections_by_tag:
+            tag_path= self.api_dir / f"{tag}.py"
+
+            tag_path.write_text(
+                tag_template.render(package_name=self.package_name, tag=tag, endpoints=collection.endpoints),
+                encoding=self.file_encoding,
+            )
 
 
 def _get_project_for_url_or_path(

@@ -1,0 +1,44 @@
+
+""" Contains methods for accessing the API Endpoints """
+
+from typing import Any, Dict, List, Optional, Union, cast
+import attr
+
+{% for endpoint in endpoints %}
+from . import {{ utils.snake_case(endpoint.name) }}
+{% for relative in endpoint.relative_imports %}
+{{ relative }}
+{% endfor %}
+{% endfor %}
+from ...client import Client
+from ...types import Response
+
+
+
+
+@attr.s(auto_attribs=True)
+class {{ utils.pascal_case(tag) }}Endpoints:
+
+    client: Client
+
+{% from "endpoint_init_macros.py.jinja" import arguments, kwargs %}
+
+{% for endpoint in endpoints %}
+
+    def {{ utils.snake_case(endpoint.name) }}(
+        self,
+        {{ arguments(endpoint) | indent(8) }}
+) -> Response[{{ endpoint.response_type() }}]:
+        {% if endpoint.description %}
+        """
+            {{ endpoint.description }}
+        """
+        {% elif endpoint.summary %}
+        """
+            {{ endpoint.summary  }}
+        """
+        {% endif %}
+        return {{ utils.snake_case(endpoint.name) }}.sync_detailed(
+            {{ kwargs(endpoint) }}
+        )
+{% endfor %}

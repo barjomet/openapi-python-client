@@ -2,6 +2,7 @@
 from typing import BinaryIO, Generic, MutableMapping, Optional, TextIO, Tuple, TypeVar, Union
 
 import attr
+from requests import PreparedRequest
 
 
 class Unset:
@@ -24,7 +25,6 @@ class File:
     mime_type: Optional[str] = None
 
     def to_tuple(self) -> FileJsonType:
-        """ Return a tuple representation that httpx will accept for multipart/form-data """
         return self.file_name, self.payload, self.mime_type
 
 
@@ -38,6 +38,7 @@ class Response(Generic[T]):
     status_code: int
     content: bytes
     headers: MutableMapping[str, str]
+    request: PreparedRequest
     parsed: Optional[T]
 
 

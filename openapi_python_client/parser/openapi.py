@@ -163,12 +163,12 @@ class Endpoint:
         endpoint.multipart_body_class = Endpoint.parse_multipart_body(body=data.requestBody, config=config)
 
         if endpoint.form_body_class:
-            endpoint.relative_imports.add(import_string_from_class(endpoint.form_body_class, prefix="...models"))
+            endpoint.relative_imports.add(import_string_from_class(endpoint.form_body_class, prefix="..models"))
         if endpoint.multipart_body_class:
-            endpoint.relative_imports.add(import_string_from_class(endpoint.multipart_body_class, prefix="...models"))
+            endpoint.relative_imports.add(import_string_from_class(endpoint.multipart_body_class, prefix="..models"))
         if json_body is not None:
             endpoint.json_body = json_body
-            endpoint.relative_imports.update(endpoint.json_body.get_imports(prefix="..."))
+            endpoint.relative_imports.update(endpoint.json_body.get_imports(prefix=".."))
         return endpoint, schemas
 
     @staticmethod
@@ -206,7 +206,7 @@ class Endpoint:
                     )
                 )
                 continue
-            endpoint.relative_imports |= response.prop.get_imports(prefix="...")
+            endpoint.relative_imports |= response.prop.get_imports(prefix="..")
             endpoint.responses.append(response)
         return endpoint, schemas
 
@@ -240,7 +240,7 @@ class Endpoint:
             else:
                 used_python_names[prop.python_name] = (prop, param.param_in)
 
-            endpoint.relative_imports.update(prop.get_imports(prefix="..."))
+            endpoint.relative_imports.update(prop.get_imports(prefix=".."))
 
             if param.param_in == oai.ParameterLocation.QUERY:
                 endpoint.query_parameters.append(prop)

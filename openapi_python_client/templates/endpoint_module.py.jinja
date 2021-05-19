@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 import httpx
 from attr import asdict
 
-from ...client import AuthenticatedClient, Client
+from ...client import Client
 from ...types import Response, UNSET{% if endpoint.multipart_body_class %}, File {% endif %}
 
 {% for relative in endpoint.relative_imports %}
@@ -34,7 +34,9 @@ def _get_kwargs(
 
     {{ query_params(endpoint) | indent(4) }}
 
+    {% if endpoint.json_body %}
     {{ json_body(endpoint) | indent(4) }}
+    {% endif %}
 
     {% if endpoint.multipart_body_class %}
     files = {}
@@ -51,13 +53,14 @@ def _get_kwargs(
         "headers": headers,
         "cookies": cookies,
         "timeout": client.get_timeout(),
-        {% if endpoint.form_body_class %}
+        "verify": client.verify,
+        {% if endpoint.json_body %}
+        "json": {{ "json_" + endpoint.json_body.python_name }},
+        {% elif endpoint.form_body_class %}
         "data": asdict(form_data),
         {% elif endpoint.multipart_body_class %}
         "files": files,
         "data": data,
-        {% elif endpoint.json_body %}
-        "json": {{ "json_" + endpoint.json_body.python_name }},
         {% endif %}
         {% if endpoint.query_parameters %}
         "params": params,

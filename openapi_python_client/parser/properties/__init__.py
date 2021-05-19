@@ -298,7 +298,7 @@ def build_enum_property(
 
     class_name = data.title or name
     if parent_name:
-        class_name = f"{utils.pascal_case(parent_name)}{utils.pascal_case(class_name)}"
+        class_name = f"{utils.pascal_case(parent_name.split('/')[-1].split('.')[-1])}{utils.pascal_case(class_name)}"
     class_info = Class.from_string(string=class_name, config=config)
     values = EnumProperty.values_from_list(enum)
 
