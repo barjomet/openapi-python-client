@@ -32,6 +32,7 @@ class {{ utils.pascal_case(tag) }}Endpoints:
     def {{ endpoint_name }}(
         self,
         {{ arguments(endpoint) | indent(8) }}
+        parse_response: bool=True,
 ) -> Response[{{ return_string }}]:
         {% if endpoint.description %}
         """
@@ -94,16 +95,17 @@ class {{ utils.pascal_case(tag) }}Endpoints:
 
         {% if parsed_responses %}
         parsed_response = None
-        {% for response in endpoint.responses %}
-        if response.status_code == {{ response.status_code }}:
-            {% if response.prop.template %}
-                {% from "property_templates/" + response.prop.template import construct %}
-            {{ construct(response.prop, response.source) | indent(12) }}
-            {% else %}
-            {{ response.prop.python_name }} = {{ response.source }}
+        if parse_response:
+            {% for response in endpoint.responses %}
+            if response.status_code == {{ response.status_code }}:
+                {% if response.prop.template %}
+                    {% from "property_templates/" + response.prop.template import construct %}
+                {{ construct(response.prop, response.source) | indent(16) }}
+                {% else %}
+                {{ response.prop.python_name }} = {{ response.source }}
 
-            {% endif %}
-        {% endfor %}
+                {% endif %}
+            {% endfor %}
         {% endif %}
 
         return Response(
