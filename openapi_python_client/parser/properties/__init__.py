@@ -45,6 +45,17 @@ class StringProperty(Property):
 
 
 @attr.s(auto_attribs=True, frozen=True)
+class BinaryProperty(Property):
+    """A property of type str"""
+
+    max_length: Optional[int] = None
+    pattern: Optional[str] = None
+    _type_string: ClassVar[str] = "bytes"
+    _json_type_string: ClassVar[str] = "bytes"
+
+
+
+@attr.s(auto_attribs=True, frozen=True)
 class DateTimeProperty(Property):
     """
     A property of type datetime.datetime
@@ -251,6 +262,14 @@ def _string_based_property(
             name=name,
             required=required,
             default=convert("datetime.date", data.default),
+            nullable=data.nullable,
+        )
+    elif string_format == "byte":
+         return BinaryProperty(
+            name=name,
+            default=convert("bytes", data.default),
+            required=required,
+            pattern=data.pattern,
             nullable=data.nullable,
         )
     elif string_format == "binary":

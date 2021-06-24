@@ -95,6 +95,7 @@ class Endpoint:
     form_body_class: Optional[Class] = None
     json_body: Optional[Property] = None
     multipart_body_class: Optional[Class] = None
+    binary_body: Optional[Property] = None
     errors: List[ParseError] = field(default_factory=list)
 
     @staticmethod
@@ -114,6 +115,23 @@ class Endpoint:
         if json_body is not None and isinstance(json_body.media_type_schema, oai.Reference):
             return Class.from_string(string=json_body.media_type_schema.ref, config=config)
         return None
+
+    @staticmethod
+    def parse_request_binary_body(
+        *, body: oai.RequestBody, schemas: Schemas, parent_name: str, config: Config
+    ) -> Tuple[Union[Property, PropertyError, None], Schemas]:
+        body_content = body.content
+        binary_body = body_content.get("application/octet-stream")
+        if binary_body is not None and binary_body.media_type_schema is not None:
+            return property_from_data(
+                name="binary_body",
+                required=True,
+                data=binary_body.media_type_schema,
+                schemas=schemas,
+                parent_name=parent_name,
+                config=config,
+            )
+        return None, schemas
 
     @staticmethod
     def parse_request_json_body(
@@ -159,6 +177,19 @@ class Endpoint:
                 ),
                 schemas,
             )
+        
+        binary_body, schemas = Endpoint.parse_request_binary_body(
+            body=data.requestBody, schemas=schemas, parent_name=endpoint.name, config=config
+        )
+        if isinstance(binary_body, ParseError):
+            return (
+                ParseError(
+                    header=f"Cannot parse body of endpoint {endpoint.name}",
+                    detail=binary_body.detail,
+                    data=binary_body.data,
+                ),
+                schemas,
+            )
 
         endpoint.multipart_body_class = Endpoint.parse_multipart_body(body=data.requestBody, config=config)
 
@@ -166,6 +197,9 @@ class Endpoint:
             endpoint.relative_imports.add(import_string_from_class(endpoint.form_body_class, prefix="..models"))
         if endpoint.multipart_body_class:
             endpoint.relative_imports.add(import_string_from_class(endpoint.multipart_body_class, prefix="..models"))
+        if binary_body is not None:
+            endpoint.binary_body = binary_body
+            endpoint.relative_imports.update(endpoint.binary_body.get_imports(prefix=".."))
         if json_body is not None:
             endpoint.json_body = json_body
             endpoint.relative_imports.update(endpoint.json_body.get_imports(prefix=".."))

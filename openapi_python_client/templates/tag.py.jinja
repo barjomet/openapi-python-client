@@ -80,7 +80,9 @@ class {{ utils.pascal_case(tag) }}Endpoints:
             cookies=cookies,
             timeout=self.client.get_timeout(),
             verify=self.client.verify,
-            {% if endpoint.json_body %}
+            {% if endpoint.binary_body %}
+            data={{ endpoint.binary_body.python_name }},
+            {% elif endpoint.json_body %}
             json={{ "json_" + endpoint.json_body.python_name }},
             {% elif endpoint.form_body_class %}
             data=asdict(form_data),

@@ -5,7 +5,10 @@
 {% for parameter in endpoint.path_parameters %}
 {{ parameter.to_string() }},
 {% endfor %}
-{% if endpoint.json_body %}
+{% if endpoint.binary_body %}
+{# JSON body if any #}
+binary_body: {{ endpoint.binary_body.get_type_string() }},
+{% elif endpoint.json_body %}
 {# JSON body if any #}
 json_body: {{ endpoint.json_body.get_type_string() }},
 {% elif endpoint.form_body_class %}
