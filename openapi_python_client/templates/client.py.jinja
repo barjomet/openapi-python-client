@@ -15,7 +15,7 @@ class Client:
     token: str = None
     verify: Optional[bool] = False
     date_format: str = '%Y-%m-%d'
-        datetime_format: str = '%Y-%m-%dT%H:%M:%S.%f%z'
+    datetime_format: str = '%Y-%m-%dT%H:%M:%S.%f%z'
 
     def get_headers(self) -> Dict[str, str]:
         """ Get headers to be used in all endpoints """
